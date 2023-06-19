@@ -7,7 +7,7 @@ on:
     branches: [ "master" ]
 
 jobs:
-  build:
+  build-linux:
 
     runs-on: ubuntu-latest
 
@@ -17,3 +17,6 @@ jobs:
       run: ./configure
     - name: make
       run: make
+    - name: make debug
+      run: make CFLAGS="-DDEBUG" CPPFLAGS="-DDEBUG"
+  
