@@ -15,8 +15,9 @@ jobs:
     - uses: actions/checkout@v3
     - name: configure
       run: ./configure
-    - name: make
+    - name: make release
       run: make
+    - name: make clean
+      run: make clean
     - name: make debug
       run: make CFLAGS="-DDEBUG" CPPFLAGS="-DDEBUG"
-  
