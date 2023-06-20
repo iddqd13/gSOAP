@@ -8,7 +8,7 @@
 gSOAP XML Web services tools
 Copyright (C) 2000-2016, Robert van Engelen, Genivia Inc., All Rights Reserved.
 This part of the software is released under one of the following licenses:
-GPL, the gSOAP public license, or Genivia's license for commercial use.
+GPL or the gSOAP public license.
 --------------------------------------------------------------------------------
 gSOAP public license.
 
@@ -130,15 +130,19 @@ edit WS/WS-typemap.dat for the following two definition blocks:
         unsigned int*                        KeySize;
     wst__RequestSecurityTokenType = $\
         struct wst__BinaryExchangeType*      BinaryExchange;
+    wst__RequestSecurityTokenType = $\
+        struct wst__AuthenticatorType*       Authenticator;
 
-    wst__RequestSecurityTokenResponseType = $\
-        _wsp__AppliesTo_*                    wsp__AppliesTo;
     wst__RequestSecurityTokenResponseType = $\
         struct wst__RequestedSecurityTokenType* RequestedSecurityToken;
     wst__RequestSecurityTokenResponseType = $\
         struct wst__RequestedReferenceType*  RequestedAttachedReference;
     wst__RequestSecurityTokenResponseType = $\
         struct wst__RequestedReferenceType*  RequestedUnattachedReference;
+    wst__RequestSecurityTokenResponseType = $\
+        struct wst__RequestedProofTokenType* RequestedProofToken;
+    wst__RequestSecurityTokenResponseType = $\
+        struct wst__RequestedTokenCancelledType* RequestedTokenCancelled;
     wst__RequestSecurityTokenResponseType = $\
         char*                                KeyType;
     wst__RequestSecurityTokenResponseType = $\
@@ -149,6 +153,8 @@ edit WS/WS-typemap.dat for the following two definition blocks:
         wst__EntropyType*                    Entropy;
     wst__RequestSecurityTokenResponseType = $\
         struct wst__BinaryExchangeType*      BinaryExchange;
+    wst__RequestSecurityTokenResponseType = $\
+        struct wst__AuthenticatorType*       Authenticator;
 
 For example, to add the `wst:Lifetime` element to the
 RequestSecurityTokenResponse add the following two lines:
@@ -195,7 +201,8 @@ NULL, `password` to authenticate or NULL, `saml1` if non-NULL, requests SAML
 received, `saml2` if non-NULL, requests SAML 2.0 and upon return points to a
 pointer that is set to the SAML 2.0 assertion received.
 
-Returns `SOAP_OK` on success with `saml1` or `saml2` set and verified.
+Returns `SOAP_OK` on success when the assertion could be verified, with `saml1`
+or `saml2` set.
 
 For example:
 
@@ -243,7 +250,7 @@ For example:
         {
           if (saml2->__union_AssertionType[i].saml2__Statement)
           {
-            // left out
+            // omitted from displaying
           }
           if (saml2->__union_AssertionType[i].saml2__AuthnStatement)
           {
@@ -255,7 +262,7 @@ For example:
           }
           if (saml2->__union_AssertionType[i].saml2__AuthzDecisionStatement)
           {
-            // left out
+            // omitted from displaying
           }
           if (saml2->__union_AssertionType[i].saml2__AttributeStatement)
           {
@@ -290,13 +297,25 @@ For example:
     soap_free(soap);
 @endcode
 
+This prints several of the assertion's properties, including the conditions
+under which the assertion is valid.  The `NotBefore` and `NotOnOrAfter`
+conditions can be checked against the current time as follows:
+
+@code
+    time_t now = time(NULL);
+    if (saml2->saml2__Conditions->NotBefore && *saml2->saml2__Conditions->NotBefore > now)
+      ... error // not valid yet
+    if (saml2->saml2__Conditions->NotOnOrAfter && *saml2->saml2__Conditions->NotOnOrAfter <= now)
+      ... error // expired
+@endcode
+
 @subsection wst_soap_wst_request_psha1_token
 
 @code
     int soap_wst_request_psha1_token(struct soap *soap, const char *endpoint, int soapver, const char *applyto, const char *username, const char *password, char *psha1, size_t psha1len)
 @endcode
 
-Request PSHA1 token with `endpoint` service endpoint URL (send to), `soapver` SOAP version with 1 = SOAP 1.1, 2 = SOAP 1.2 (SOAP 1.2 is recommended), `applyto` your service domain, `username` to authenticate or NULL, `password` to authenticate or NULL, `psha1` is filled with the PSHA1 result token of `psa1len` bytes.
+Request P_SHA1 token with `endpoint` service endpoint URL (send to), `soapver` SOAP version with 1 = SOAP 1.1, 2 = SOAP 1.2 (SOAP 1.2 is recommended), `applyto` your service domain, `username` to authenticate or NULL, `password` to authenticate or NULL, `psha1` is filled with the P_SHA1 result token of `psa1len` bytes.
 
 Returns `SOAP_OK` on success.
 
@@ -330,7 +349,7 @@ Returns `SOAP_OK` on success.
     // HTTPS certificate verification callback
     soap->fsslverify = ssl_verify;
     // PSHA1 token request
-    if (soap_wst_request_saml_token(soap, to, soapver, applyto, username, password, psha1, 256))
+    if (soap_wst_request_psha1_token(soap, to, soapver, applyto, username, password, psha1, 256))
     {
       soap_print_fault(soap, stderr);
     }
@@ -341,6 +360,14 @@ Returns `SOAP_OK` on success.
     soap_destroy(soap);
     soap_end(soap);
     soap_free(soap);
+@endcode
+
+@subsection wst_soap_wst_request_psha256_token
+
+Similar to the previous section, request a P_SHA256 token with:
+
+@code
+    int soap_wst_request_psha256_token(struct soap *soap, const char *endpoint, int soapver, const char *applyto, const char *username, const char *password, char *psha256, size_t psha256len)
 @endcode
 
 @section wst_5 Using the wst Plugin for Servers
@@ -404,16 +431,16 @@ struct Namespace soap11_namespaces[] = {
   {"xsd", "http://www.w3.org/2001/XMLSchema", "http://www.w3.org/*/XMLSchema", NULL},
   {"c14n", "http://www.w3.org/2001/10/xml-exc-c14n#", NULL, NULL},
   {"ds", "http://www.w3.org/2000/09/xmldsig#", NULL, NULL},
-  {"saml1", "urn:oasis:names:tc:SAML:1.0:assertion", NULL, NULL},
-  {"saml2", "urn:oasis:names:tc:SAML:2.0:assertion", NULL, NULL},
+  {"saml1", SOAP_NAMESPACE_OF_saml1, NULL, NULL},
+  {"saml2", SOAP_NAMESPACE_OF_saml2, NULL, NULL},
   {"xenc", "http://www.w3.org/2001/04/xmlenc#", NULL, NULL},
-  {"wsc", "http://docs.oasis-open.org/ws-sx/ws-secureconversation/200512", NULL, NULL},
-  {"wsse", "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd", "http://docs.oasis-open.org/wss/oasis-wss-wssecurity-secext-1.1.xsd", NULL},
+  {"wsc", "http://docs.oasis-open.org/ws-sx/ws-secureconversation/200512", "http://schemas.xmlsoap.org/ws/2005/02/sc", NULL},
+  {"wsse", SOAP_NAMESPACE_OF_wsse, "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd", NULL},
   {"chan", "http://schemas.microsoft.com/ws/2005/02/duplex", NULL, NULL},
   {"wsa5", "http://www.w3.org/2005/08/addressing", "http://schemas.xmlsoap.org/ws/2004/08/addressing", NULL},
   {"wsp", "http://schemas.xmlsoap.org/ws/2004/09/policy", NULL, NULL},
-  {"wsu", "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd", NULL, NULL},
-  {"wst", "http://docs.oasis-open.org/ws-sx/ws-trust/200512", NULL, NULL},
+  {"wsu", SOAP_NAMESPACE_OF_wsu, NULL, NULL},
+  {"wst", SOAP_NAMESPACE_OF_wst, "http://schemas.xmlsoap.org/ws/2005/02/trust", NULL},
   {NULL, NULL, NULL, NULL}
 };
 
@@ -425,16 +452,16 @@ struct Namespace soap12_namespaces[] = {
   {"xsd", "http://www.w3.org/2001/XMLSchema", "http://www.w3.org/*/XMLSchema", NULL},
   {"c14n", "http://www.w3.org/2001/10/xml-exc-c14n#", NULL, NULL},
   {"ds", "http://www.w3.org/2000/09/xmldsig#", NULL, NULL},
-  {"saml1", "urn:oasis:names:tc:SAML:1.0:assertion", NULL, NULL},
-  {"saml2", "urn:oasis:names:tc:SAML:2.0:assertion", NULL, NULL},
+  {"saml1", SOAP_NAMESPACE_OF_saml1, NULL, NULL},
+  {"saml2", SOAP_NAMESPACE_OF_saml2, NULL, NULL},
   {"xenc", "http://www.w3.org/2001/04/xmlenc#", NULL, NULL},
-  {"wsc", "http://docs.oasis-open.org/ws-sx/ws-secureconversation/200512", NULL, NULL},
-  {"wsse", "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd", "http://docs.oasis-open.org/wss/oasis-wss-wssecurity-secext-1.1.xsd", NULL},
+  {"wsc", "http://docs.oasis-open.org/ws-sx/ws-secureconversation/200512", "http://schemas.xmlsoap.org/ws/2005/02/sc", NULL},
+  {"wsse", SOAP_NAMESPACE_OF_wsse, "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd", NULL},
   {"chan", "http://schemas.microsoft.com/ws/2005/02/duplex", NULL, NULL},
   {"wsa5", "http://www.w3.org/2005/08/addressing", "http://schemas.xmlsoap.org/ws/2004/08/addressing", NULL},
   {"wsp", "http://schemas.xmlsoap.org/ws/2004/09/policy", NULL, NULL},
-  {"wsu", "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd", NULL, NULL},
-  {"wst", "http://docs.oasis-open.org/ws-sx/ws-trust/200512", NULL, NULL},
+  {"wsu", SOAP_NAMESPACE_OF_wsu, NULL, NULL},
+  {"wst", SOAP_NAMESPACE_OF_wst, "http://schemas.xmlsoap.org/ws/2005/02/trust", NULL},
   {NULL, NULL, NULL, NULL}
 };
 
@@ -450,7 +477,7 @@ extern "C" {
 
 /**
 @fn int soap_wst_request_saml_token(struct soap *soap, const char *endpoint, int soapver, const char *applyto, const char *username, const char *password, saml1__AssertionType **saml1, saml2__AssertionType **saml2)
-@brief Request SAML 1.0 or SAML 2.0 token.
+@brief Request SAML 1.0 or SAML 2.0 token.  Verifies the SAML signature, which requires soap->cafile to be set.   Does not verify the conditions of the SAML token, such as NotBefore and NotOnOrAfter, which has to be done explicitly as shown in the documentation.
 @param soap context
 @param endpoint service endpoint URL (send to)
 @param soapver SOAP version 1 = SOAP 1.1, 2 = SOAP 1.2 (recommended)
@@ -469,7 +496,7 @@ soap_wst_request_saml_token(struct soap *soap, const char *endpoint, int soapver
   struct wst__RequestSecurityTokenType request;
   struct wst__RequestSecurityTokenResponseType response;
   const struct Namespace *saved_namespaces = soap->namespaces;
-  DBGFUN("soap_wst_request_security_token");
+  DBGFUN("soap_wst_request_saml_token");
   /* SOAP 1.1 or 1.2 */
   if (soapver == 1)
     soap_set_namespaces(soap, soap11_namespaces);
@@ -502,7 +529,7 @@ soap_wst_request_saml_token(struct soap *soap, const char *endpoint, int soapver
   soap_wsa_request(soap, NULL, endpoint, soap_wst_rst_action);
   /* add credentials */
   if (username && password)
-    soap_wsse_add_UsernameTokenDigest(soap, NULL, username, password);
+    soap_wsse_add_UsernameTokenDigest(soap, "User", username, password);
   /* verify init enables signature verification */
   soap_wsse_verify_init(soap);
   if (soap_call___wst__RequestSecurityToken(soap, endpoint, soap_wst_rst_action, &request, &response))
@@ -520,11 +547,18 @@ soap_wst_request_saml_token(struct soap *soap, const char *endpoint, int soapver
     else if (saml2 && !strcmp(response.TokenType, "urn:oasis:names:tc:SAML:2.0:assertion"))
       *saml2 = response.RequestedSecurityToken->saml2__Assertion;
   }
-  /* verify assertion using the enveloped signature that contains a X509 certificate */
-  if (saml1 && *saml1 && soap_wsse_verify_with_signature(soap, (*saml1)->ds__Signature))
-    return soap->error;
-  if (saml2 && *saml2 && soap_wsse_verify_with_signature(soap, (*saml2)->ds__Signature))
-    return soap->error;
+  if (saml1 && *saml1)
+  {
+    /* verify assertion using the enveloped signature that contains a X509 certificate */
+    if (soap_wsse_verify_with_signature(soap, (*saml1)->ds__Signature))
+      return soap->error;
+  }
+  else if (saml2 && *saml2)
+  {
+    /* verify assertion using the enveloped signature that contains a X509 certificate */
+    if (soap_wsse_verify_with_signature(soap, (*saml2)->ds__Signature))
+      return soap->error;
+  }
   return SOAP_OK;
 }
 
@@ -551,7 +585,7 @@ soap_wst_request_psha1_token(struct soap *soap, const char *endpoint, int soapve
   char HA[16];
   unsigned int keysize = (unsigned int)psha1len;
   const struct Namespace *saved_namespaces = soap->namespaces;
-  DBGFUN("soap_wst_request_security_token");
+  DBGFUN("soap_wst_request_psha1_token");
   /* SOAP 1.1 or 1.2 */
   if (soapver == 1)
     soap_set_namespaces(soap, soap11_namespaces);
@@ -582,7 +616,7 @@ soap_wst_request_psha1_token(struct soap *soap, const char *endpoint, int soapve
   soap_wsa_request(soap, NULL, endpoint, soap_wst_rst_action);
   /* add credentials */
   if (username && password)
-    soap_wsse_add_UsernameTokenDigest(soap, NULL, username, password);
+    soap_wsse_add_UsernameTokenDigest(soap, "User", username, password);
   /* verify init enables signature verification */
   soap_wsse_verify_init(soap);
   if (soap_call___wst__RequestSecurityToken(soap, endpoint, soap_wst_rst_action, &request, &response))
@@ -597,7 +631,7 @@ soap_wst_request_psha1_token(struct soap *soap, const char *endpoint, int soapve
   {
     int len;
     const char *seed = soap_base642s(soap, response.Entropy->BinarySecret->__item, NULL, 0, &len);
-    if (soap_psha1(soap, HA, seed, len, psha1, psha1len))
+    if (soap_psha1(soap, HA, 16, seed, len, psha1, psha1len))
       return soap->error;
   }
   return SOAP_OK;

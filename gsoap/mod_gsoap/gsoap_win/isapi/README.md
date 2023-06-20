@@ -170,12 +170,12 @@ In addition, two C functions should be defined by your service code, namely
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~{.cpp}
     extern "C" {
     int mod_gsoap_init(void) {
-	// TODO: add your initialization code here 
-	return SOAP_OK;
+        // TODO: add your initialization code here 
+        return SOAP_OK;
     }
     int mod_gsoap_terminate(void) {
-	// TODO: add your termination code here
-	return SOAP_OK;
+        // TODO: add your termination code here
+        return SOAP_OK;
     }
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -203,6 +203,42 @@ IIS process attaches to your DLL and before it detaches it. Do not rely on the
 Thread attach/detach callback: in my experience IIS does not always call
 `DllMain` in your DLL if these threads were already in the thread pool before
 your DLL was loaded. Use thread local storage instead.
+
+
+IIS Settings                                                         {#settings}
+============
+
+This depends on the version of the Windows OS.
+
+The gSOAP ISAPI extension uses `ReadClient`.  The documentation of this
+function states: *"The number of bytes that the Web Server reads when receiving
+POST data is specified in the `HKEY_LOCAL_MACHINE\COMM\HTTPD\PostReadSize`
+registry key. The Web Server will read in, at most, the number of bytes
+specified in this registry value before calling the ISAPI extension."* This
+value should be changed if it is too small to handle POST requests that are
+larger than this value.
+
+Furthermore, IIS enforces file upload size limits, which by default is 2MB.  This
+is a problem for POST requests that are larger than the default.  The IIS settings
+should be updated in `web.config`, for example to increase the allowed size of
+the POST request messages to 100MB:
+
+    <configuration>
+        <system.webServer>
+            <security>
+              <requestFiltering>
+                <requestLimits maxAllowedContentLength="100000000"/>
+              </requestFiltering>
+            </security>
+        </system.webServer>
+    </configuration>
+
+The gSOAP engine limits the size of requests to 2GB max, which can be changed
+by setting the value of `soap->recv_maxlength` to the max number of bytes allowed
+to receive.  For other gSOAP settings, please see the gSOAP documentation.
+
+Do not set gSOAP timeouts (`send_timeout` and `recv_timeout`), which may cause
+failures.  IIS enforces timeouts internally.
 
 
 Troubleshooting                                                         {#debug}
@@ -277,7 +313,9 @@ License                                                               {#license}
 =======
 
 The ISAPI extension for gSOAP is released under the gSOAP open source public
-license (compatible with commercial licensing) and GPLv2.
+license and the GPLv2.  The open source licensing is replaced by Genivia's
+license for commercial use when a commercial-use license is purchased by
+customer.
 
 
 Further reading                                                    {#references}

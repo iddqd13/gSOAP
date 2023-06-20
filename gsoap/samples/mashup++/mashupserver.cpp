@@ -10,7 +10,7 @@
 gSOAP XML Web services tools
 Copyright (C) 2001-2008, Robert van Engelen, Genivia, Inc. All Rights Reserved.
 This software is released under one of the following two licenses:
-GPL or Genivia's license for commercial use.
+GPL.
 --------------------------------------------------------------------------------
 GPL license.
 
@@ -64,27 +64,24 @@ int mashupService::dtx(_XML x, _ns3__commingtotown &response)
   if (Time.gmt(&gmt, gmtResponse))
     return soap_receiverfault("Cannot connect to GMT server", NULL);
 
-  time_t *now = gmtResponse.param_1;
-
-  if (!now)
-    return soap_receiverfault("Could not retrieve current time", NULL);
+  time_t now = gmtResponse.param_1;
 
   struct tm tm;
 
   memset(&tm, 0, sizeof(struct tm));
   tm.tm_mday = 25;
   tm.tm_mon = 11;
-  tm.tm_year = gmtime(now)->tm_year; // this year
+  tm.tm_year = gmtime(&now)->tm_year; // this year
 
   time_t xmas = soap_timegm(&tm);
 
-  if (xmas < *now)
+  if (xmas < now)
   {
     tm.tm_year++; // xmas just passed, go to next year
     xmas = soap_timegm(&tm);
   }
 
-  double sec = difftime(xmas, *now);
+  double sec = difftime(xmas, now);
   
   calcProxy Calc;
   double days;

@@ -7,7 +7,7 @@
 gSOAP XML Web services tools
 Copyright (C) 2000-2016, Robert van Engelen, Genivia Inc., All Rights Reserved.
 This part of the software is released under one of the following licenses:
-GPL, the gSOAP public license, or Genivia's license for commercial use.
+GPL or the gSOAP public license.
 --------------------------------------------------------------------------------
 gSOAP public license.
 
@@ -58,7 +58,7 @@ extern "C" {
 #endif
 
 /** plugin identification for plugin registry */
-#define SESSIONS_ID "SESSIONS-1.0"
+#define SESSIONS_ID "SOAP-SESSIONS/1.0"
 
 /** Max number of sessions allowed */
 #define SESSION_MAX (8192)

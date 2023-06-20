@@ -7,7 +7,7 @@
 gSOAP XML Web services tools
 Copyright (C) 2001-2008, Robert van Engelen, Genivia, Inc. All Rights Reserved.
 This software is released under one of the following two licenses:
-GPL or Genivia's license for commercial use.
+GPL.
 --------------------------------------------------------------------------------
 GPL license.
 
@@ -31,6 +31,9 @@ A commercial use license is available from Genivia, Inc., contact@genivia.com
 --------------------------------------------------------------------------------
 */
 
+#ifndef XML_RPC_IO_H
+#define XML_RPC_IO_H
+
 #ifdef JSON_NAMESPACE
 namespace json {
 #endif
@@ -43,4 +46,6 @@ extern std::istream& operator>>(std::istream&, struct value&);
 
 #ifdef JSON_NAMESPACE
 } // namespace json
+#endif
+
 #endif

@@ -1,13 +1,36 @@
 /*
 	wst.h
 
-	WS-Trust 2005/12 with SAML 1.0/2.0
+	WS-Trust 2005/12 with SAML 1.0/2.0, also accepts 2005/02
 	Generated with:
 	wsdl2h -cguxy -o wst.h -t WS/WS-typemap.dat WS/WS-Trust.xsd
 
+        Requires:
+        - plugin/wsseapi.h and plugin/wsseapi.c
+        - plugin/mecevp.c
+        - plugin/smdevp.c
+        - plugin/wsaapi.h and plugin/wsaapi.c
+        - plugin/wstapi.h and plugin/wstapi.c
+        - custom/struct_timeval.c
+
+        This file imports:
+        - wsse.h
+        - saml1.h
+        - saml2.h
+        - custom/struct_timeval.h
+        - wsu.h
+        - xenc.h
+        - ds.h
+        - c14n.h
+        - wsa5.h
+        - wsp_appliesto.h
+        - wstx.h
+
 	- Removed //gsoapopt
+        - Added #import "wsse11.h" to choose between WS-Security 1.1 and 1.0
 	- Changed http://docs.oasis-open.org/ws-sx/ws-trust/200512 to remove trailing /
 	- Changed //gsoap wst schema namespace directive to import directive
+        - Added //gsoap wst schema namespace2 directive
 	- Added #import "wsp_appliesto.h"
 	- Added #import "wstx.h" at the end of these definitions
 
@@ -27,8 +50,11 @@
  *                                                                            *
 \******************************************************************************/
 
+// Choose between WS-Security 1.1 or 1.0:
+// #import "wsse11.h"	// wsse = <http://docs.oasis-open.org/wss/oasis-wss-wssecurity-secext-1.1.xsd>
 #import "wsse.h"	// wsse = <http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd>
-#import "wsu.h"	// wsu = <http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd>
+
+#import "wsu.h" 	// wsu = <http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd>
 #import "wsa5.h"	// wsa5 = <http://www.w3.org/2005/08/addressing>
 #import "wsp_appliesto.h"
 
@@ -40,6 +66,7 @@
 
 #define SOAP_NAMESPACE_OF_wst	"http://docs.oasis-open.org/ws-sx/ws-trust/200512"
 //gsoap wst   schema import:	http://docs.oasis-open.org/ws-sx/ws-trust/200512
+//gsoap wst   schema namespace2:	http://schemas.xmlsoap.org/ws/2005/02/trust
 //gsoap wst   schema elementForm:	qualified
 //gsoap wst   schema attributeForm:	unqualified
 
@@ -63,6 +90,7 @@ typedef struct wst__RequestedSecurityTokenType
 {	saml1__AssertionType *saml1__Assertion;
 	saml2__AssertionType *saml2__Assertion;
         _wsse__SecurityTokenReference *wsse__SecurityTokenReference;
+        struct wsc__SecurityContextTokenType *wsc__SecurityContextToken;
 } wst__RequestedSecurityTokenType;
 
 /// @brief Typedef synonym for struct wst__BinarySecretType.
@@ -230,7 +258,11 @@ struct wst__RequestSecurityTokenType
 /// Member declared in WS/WS-typemap.dat
        unsigned int*                        KeySize;
 /// Member declared in WS/WS-typemap.dat
+       struct wst__CancelTargetType*        CancelTarget;
+/// Member declared in WS/WS-typemap.dat
        struct wst__BinaryExchangeType*      BinaryExchange;
+/// Member declared in WS/WS-typemap.dat
+       struct wst__AuthenticatorType*       Authenticator;
 };
 
 /// @brief "http://docs.oasis-open.org/ws-sx/ws-trust/200512/":RequestSecurityTokenResponseType is a complexType.
@@ -299,6 +331,10 @@ struct wst__RequestSecurityTokenResponseType
 /// Member declared in WS/WS-typemap.dat
        struct wst__RequestedReferenceType*  RequestedUnattachedReference;
 /// Member declared in WS/WS-typemap.dat
+       struct wst__RequestedProofTokenType* RequestedProofToken;
+/// Member declared in WS/WS-typemap.dat
+       struct wst__RequestedTokenCancelledType* RequestedTokenCancelled;
+/// Member declared in WS/WS-typemap.dat
        char*                                KeyType;
 /// Member declared in WS/WS-typemap.dat
        char*                                RequestType;
@@ -307,7 +343,13 @@ struct wst__RequestSecurityTokenResponseType
 /// Member declared in WS/WS-typemap.dat
        wst__EntropyType*                    Entropy;
 /// Member declared in WS/WS-typemap.dat
+       struct wst__LifetimeType*            Lifetime;
+/// Member declared in WS/WS-typemap.dat
+       unsigned int*                        KeySize;
+/// Member declared in WS/WS-typemap.dat
        struct wst__BinaryExchangeType*      BinaryExchange;
+/// Member declared in WS/WS-typemap.dat
+       struct wst__AuthenticatorType*       Authenticator;
 };
 
 /// @brief "http://docs.oasis-open.org/ws-sx/ws-trust/200512/":ClaimsType is a complexType.
@@ -430,6 +472,8 @@ struct wst__RequestedProofTokenType
 ///       Use wsdl2h option -x to remove this element.
 ///       Use wsdl2h option -d for xsd__anyType DOM (soap_dom_element):
 ///       wsdl2h maps xsd:any to xsd__anyType, use typemap.dat to remap.
+/// Member declared in WS/WS-typemap.dat
+        struct xenc__EncryptedKeyType*       xenc__EncryptedKey;
 };
 
 /// @brief "http://docs.oasis-open.org/ws-sx/ws-trust/200512/":RenewTargetType is a complexType.
@@ -498,6 +542,8 @@ struct wst__CancelTargetType
 ///       Use wsdl2h option -x to remove this element.
 ///       Use wsdl2h option -d for xsd__anyType DOM (soap_dom_element):
 ///       wsdl2h maps xsd:any to xsd__anyType, use typemap.dat to remap.
+/// Member declared in WS/WS-typemap.dat
+    _wsse__SecurityTokenReference        wsse__SecurityTokenReference;
 };
 
 /// @brief "http://docs.oasis-open.org/ws-sx/ws-trust/200512/":RequestedTokenCancelledType is a complexType.

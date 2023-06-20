@@ -8,20 +8,7 @@
 gSOAP XML Web services tools
 Copyright (C) 2000-2012, Robert van Engelen, Genivia Inc., All Rights Reserved.
 This part of the software is released under one of the following licenses:
-GPL, the gSOAP public license, or Genivia's license for commercial use.
---------------------------------------------------------------------------------
-gSOAP public license.
-
-The contents of this file are subject to the gSOAP Public License Version 1.3
-(the "License"); you may not use this file except in compliance with the
-License. You may obtain a copy of the License at
-http://www.cs.fsu.edu/~engelen/soaplicense.html
-Software distributed under the License is distributed on an "AS IS" basis,
-WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
-for the specific language governing rights and limitations under the License.
-
-The Initial Developer of the Original Code is Robert A. van Engelen.
-Copyright (C) 2000-2012, Robert van Engelen, Genivia Inc., All Rights Reserved.
+GPL.
 --------------------------------------------------------------------------------
 GPL license.
 
@@ -57,7 +44,7 @@ A commercial use license is available from Genivia, Inc., contact@genivia.com
 int CRYPTO_thread_setup();
 void CRYPTO_thread_cleanup();
 
-const char *URI = NULL; // Set to the service URI
+const char *URI = "https://10.0.1.5:8000/ServiceModelSamples/service"; // the service URI
 
 int main(int argc, char **argv)
 {
@@ -107,20 +94,12 @@ int main(int argc, char **argv)
       exit(1);
     }
 
-    if (!soap_valid_socket(service.bind(NULL, port, 100)))
-    {
-      service.soap_stream_fault(std::cerr);
-      exit(1);
-    }
-
     std::cerr << "Server running" << std::endl;
 
     for (;;)
     {
-      if (!soap_valid_socket(service.accept())
-       || service.ssl_accept()
-       || service.serve())
-        service.soap_stream_fault(std::cerr);
+      service.ssl_run(port);
+      service.soap_stream_fault(std::cerr);
     }
   }
   else

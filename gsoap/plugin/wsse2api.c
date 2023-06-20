@@ -7,7 +7,7 @@
 gSOAP XML Web services tools
 Copyright (C) 2000-2010, Robert van Engelen, Genivia Inc., All Rights Reserved.
 This part of the software is released under one of the following licenses:
-GPL, the gSOAP public license, or Genivia's license for commercial use.
+GPL or the gSOAP public license.
 --------------------------------------------------------------------------------
 gSOAP public license.
 
@@ -54,6 +54,10 @@ A commercial use license is available from Genivia, Inc., contact@genivia.com
 
 #if defined(SOAP_WSA_2003) || defined(SOAP_WSA_2004) || defined(SOAP_WSA_200408) || defined(SOAP_WSA_2005)
 #include "wsaapi.h"
+#endif
+
+#ifdef WIN32
+# pragma warning(disable : 4996) /* disable visual studio POSIX deprecation warnings */
 #endif
 
 #ifdef __cplusplus
@@ -2367,7 +2371,7 @@ soap_wsse_session_verify(struct soap *soap, const char hash[SOAP_SMD_SHA1_SIZE],
     if (session)
     { session->next = soap_wsse_session;
       session->expired = expired;
-      soap_memcpy((void*)session->hash, sizeof(session->hash), (const void*)hash, SOAP_SMD_SHA1_SIZE);
+      (void)soap_memcpy((void*)session->hash, sizeof(session->hash), (const void*)hash, SOAP_SMD_SHA1_SIZE);
       soap_strcpy(session->nonce, l + 1, nonce);
       soap_wsse_session = session;
     }
@@ -2452,10 +2456,10 @@ calc_nonce(struct soap *soap, char nonce[SOAP_WSSE_NONCELEN])
 { int i;
   time_t r = time(NULL);
   (void)soap;
-  soap_memcpy((void*)nonce, SOAP_WSSE_NONCELEN, (const void*)&r, 4);
+  (void)soap_memcpy((void*)nonce, SOAP_WSSE_NONCELEN, (const void*)&r, 4);
   for (i = 4; i < SOAP_WSSE_NONCELEN; i += 4)
   { r = soap_random;
-    soap_memcpy((void*)nonce + i, 4, (const void*)&r, 4);
+    (void)soap_memcpy((void*)nonce + i, 4, (const void*)&r, 4);
   }
 }
 

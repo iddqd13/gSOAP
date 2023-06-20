@@ -11,7 +11,7 @@
 gSOAP XML Web services tools
 Copyright (C) 2000-2015, Robert van Engelen, Genivia, Inc. All Rights Reserved.
 This software is released under one of the following two licenses:
-GPL or Genivia's license for commercial use.
+GPL.
 --------------------------------------------------------------------------------
 GPL license.
 
@@ -38,6 +38,7 @@ A commercial use license is available from Genivia, Inc., contact@genivia.com
 #include "json.h"
 
 #ifdef JSON_NAMESPACE
+#ifdef __cplusplus
 # define SOAP_TYPE__boolean             SOAP_TYPE_json__boolean
 # define SOAP_TYPE__i4                  SOAP_TYPE_json__i4
 # define SOAP_TYPE__int                 SOAP_TYPE_json__int
@@ -47,10 +48,14 @@ A commercial use license is available from Genivia, Inc., contact@genivia.com
 # define SOAP_TYPE__array               SOAP_TYPE_json__array
 # define SOAP_TYPE__struct              SOAP_TYPE_json__struct
 # define SOAP_TYPE__base64              SOAP_TYPE_json__base64
+# define SOAP_TYPE__rawdata             SOAP_TYPE_json__rawdata
+#endif
 #endif
 
 #ifdef JSON_NAMESPACE
+#ifdef __cplusplus
 namespace json {
+#endif
 #endif
 
 /******************************************************************************\
@@ -65,8 +70,8 @@ int json_error(struct soap *soap, struct value *v)
   {
     const char *s, *t;
     soap_set_fault(soap);
-    s = *soap_faultstring(soap);
-    t = soap_check_faultdetail(soap);
+    s = soap_fault_string(soap);
+    t = soap_fault_detail(soap);
     /* set JSON error property (Google JSON Style Guide) */
 #ifdef __cplusplus
     (*v)["error"]["code"] = soap->error;
@@ -87,6 +92,54 @@ int json_error(struct soap *soap, struct value *v)
 #endif
   }
   return soap->error;
+}
+
+int json_send_fault(struct soap *soap)
+{
+  int status = soap->error;
+  struct value *v;
+  if (status == SOAP_OK || status == SOAP_STOP)
+    return soap_closesock(soap);
+  if (status >= 200 && status < 300)
+    return soap_send_empty_response(soap, status);
+  if (status < 400)
+    status = 500;
+  soap->keep_alive = 0; /* error: close connection by disabling keep-alive */
+  v = new_value(soap);
+  json_error(soap, v);
+  soap->http_content = "application/json; charset=utf-8";
+  if (soap_response(soap, SOAP_FILE + status)
+   || json_send(soap, v)
+   || soap_end_send(soap))
+    return soap_closesock(soap);
+  return soap_closesock(soap);
+}
+
+int json_send_error(struct soap *soap, int status, const char *message, const char *details)
+{
+  struct value *v = new_value(soap);
+  if (status < 200 || status > 599)
+    status = 0;
+  /* set JSON error property (Google JSON Style Guide) */
+#ifdef __cplusplus
+  (*v)["error"]["code"] = status;
+  if (message)
+    (*v)["error"]["message"] = message;
+  if (details)
+    (*v)["error"]["errors"][0]["message"] = details;
+#else
+  *int_of(value_at(value_at(v, "error"), "code")) = status;
+  if (message)
+    *string_of(value_at(value_at(v, "error"), "message")) = soap_strdup(soap, message);
+  if (details)
+    *string_of(value_at(nth_value(value_at(value_at(v, "error"), "errors"), 0), "message")) = soap_strdup(soap, details);
+#endif
+  soap->http_content = "application/json; charset=utf-8";
+  if (soap_response(soap, SOAP_FILE + status)
+   || json_send(soap, v)
+   || soap_end_send(soap))
+    return soap_closesock(soap);
+  return soap_closesock(soap);
 }
 
 /******************************************************************************\
@@ -155,6 +208,8 @@ int json_send(struct soap *soap, const struct value *v)
       if (v->ref && soap_putbase64(soap, ((struct _base64*)v->ref)->__ptr, ((struct _base64*)v->ref)->__size))
         return soap->error;
       return soap_send_raw(soap, "\"", 1);
+    case SOAP_TYPE__rawdata:
+      return soap_send_raw(soap, (const char*)(((struct _rawdata*)v->ref)->__ptr), ((struct _rawdata*)v->ref)->__size);
     case SOAP_TYPE__struct:
       if ((soap->mode & SOAP_XML_INDENT))
         n = 2 * (++soap->level % 40) + 2;
@@ -230,7 +285,7 @@ int json_send_string(struct soap *soap, const char *s)
       }
       else
       {
-        (SOAP_SNPRINTF(buf, sizeof(buf), 7), "\\u%4x", c);
+        (SOAP_SNPRINTF(buf, sizeof(buf), 7), "\\u%.4x", c);
         if (soap_send_raw(soap, t, s - t - 1) || soap_send_raw(soap, buf, 6))
           return soap->error;
         t = s;
@@ -354,7 +409,7 @@ int json_recv(struct soap *soap, struct value *v)
     }
     case '['/*']'*/:
     {
-      size_t i;
+      int i;
       if (++soap->level > soap->maxlevel)
         return soap->error = SOAP_LEVEL;
 #ifdef __cplusplus
@@ -371,7 +426,7 @@ int json_recv(struct soap *soap, struct value *v)
       if (c == /*'['*/']')
         return SOAP_OK;
       soap_unget(soap, c);
-      for (i = 0; i < soap->maxoccurs; i++)
+      for (i = 0; i < (int)soap->maxoccurs; i++)
       {
 #ifdef __cplusplus
         if (json_recv(soap, v->operator[](i)))
@@ -400,7 +455,7 @@ int json_recv(struct soap *soap, struct value *v)
       {
         char *s;
         const char *t = NULL;
-        register size_t k;
+        size_t k;
         if (soap_append_lab(soap, NULL, 0))
           return soap->error = SOAP_EOM;
         s = soap->labbuf + soap->labidx;
@@ -463,7 +518,7 @@ int json_recv(struct soap *soap, struct value *v)
                     h = soap->tmpbuf;
                     for (i = 0; i < 4; i++)
                     {
-                      if ((c = soap_getchar(soap)) == EOF)
+                      if ((c = soap_getchar(soap)) == (int)EOF)
                         return soap->error = SOAP_EOF;
                       h[i] = c;
                     }
@@ -495,7 +550,7 @@ int json_recv(struct soap *soap, struct value *v)
                 else if ((c & 0x80) && !(soap->imode & SOAP_ENC_LATIN) && !(soap->imode & SOAP_C_UTFSTRING)) /* utf8 to ISO 8859-1 */
                 {
                   soap_wchar c1 = soap_getchar(soap);
-                  if (c1 == SOAP_EOF)
+                  if (c1 == (int)EOF)
                     return soap->error = SOAP_EOF;
                   if (c < 0xE0 && (c & 0x1F) <= 0x03)
                     *s++ = ((c & 0x1F) << 6) | (c1 & 0x3F);
@@ -527,7 +582,7 @@ int json_recv(struct soap *soap, struct value *v)
       {
         *s++ = c;
         c = soap_getchar(soap);
-      } while ((isalnum((int)c) || (int)c == '.' || (int)c == '+' || (int)c == '-') && s - soap->tmpbuf < (int)sizeof(soap->tmpbuf) - 1);
+      } while (c != (int)EOF && (isalnum((int)c) || (int)c == '.' || (int)c == '+' || (int)c == '-') && s - soap->tmpbuf < (int)sizeof(soap->tmpbuf) - 1);
       *s = '\0';
       soap_unget(soap, c);
       if (soap->tmpbuf[0] == '-' || isdigit(soap->tmpbuf[0]))
@@ -594,7 +649,12 @@ int json_call(struct soap *soap, const char *endpoint, const struct value *in, s
    || soap_begin_recv(soap)
    || json_recv(soap, out)
    || soap_end_recv(soap))
-    json_error(soap, out);
+  {
+    if (out)
+      json_error(soap, out);
+    else if (soap->error == 200 || soap->error == 201 || soap->error == 202 || soap->error == SOAP_EOF)
+      soap->error = SOAP_OK;
+  }
   return soap_closesock(soap);
 }
 
@@ -646,9 +706,18 @@ std::ostream& operator<<(std::ostream& o, const struct value& v)
   if (v.soap)
   {
     std::ostream *os = v.soap->os;
+    SOAP_SOCKET sk = v.soap->socket;
+#ifndef UNDER_CE
+    int fd = v.soap->sendfd;
+#else
+    FILE *fd = v.soap->sendfd;
+#endif
+    v.soap->socket = SOAP_INVALID_SOCKET;
     v.soap->os = &o;
     if (json_write(v.soap, v))
       o.clear(std::ios::failbit); // writing JSON data failed (must be a stream error)
+    v.soap->sendfd = fd;
+    v.soap->socket = sk;
     v.soap->os = os;
   }
   else
@@ -756,7 +825,7 @@ value json_add(const value& x, const value& y)
     {
       _struct s = x;
       _struct t = y;
-      _struct st;
+      _struct st(x.soap);
       for (_struct::iterator i = s.begin(); i != s.end(); ++i)
         st[i.name()] = *i;
       for (_struct::iterator i = t.begin(); i != t.end(); ++i)
@@ -769,7 +838,7 @@ value json_add(const value& x, const value& y)
       _array b = y;
       int n = a.size();
       int m = b.size();
-      _array ab;
+      _array ab(x.soap);
       ab.size(n + m);
       for (int i = 0; i < n; ++i)
         ab[i] = a[i];
@@ -852,12 +921,12 @@ bool json_eqv(const value& x, const value& y)
     case SOAP_TYPE__boolean:
     case SOAP_TYPE__i4:
     case SOAP_TYPE__int:
-      return value(x.soap, (_int)x == (_int)y);
+      return (_int)x == (_int)y;
     case SOAP_TYPE__double:
-      return value(x.soap, (_double)x == (_double)y);
+      return (_double)x == (_double)y;
     case SOAP_TYPE__string:
     case SOAP_TYPE__dateTime_DOTiso8601:
-      return value(x.soap, !strcmp((const char*)x, (const char*)y));
+      return !strcmp((const char*)x, (const char*)y);
     case SOAP_TYPE__struct:
       if (x.size() != y.size())
         return false;
@@ -865,11 +934,15 @@ bool json_eqv(const value& x, const value& y)
       {
         const _struct& s = x;
         const _struct& t = y;
-        _struct::iterator i = s.begin();
-        _struct::iterator j = t.begin();
-        for ( ; i != s.end(); ++i, ++j)
-          if (strcmp(i.name(), j.name()) || *i != *j)
+        for (_struct::iterator i = s.begin(); i != s.end(); ++i)
+        {
+          _struct::iterator j;
+          for (j = t.begin(); j != t.end(); ++j)
+            if (!strcmp(i.name(), j.name()))
+              break;
+          if (j == t.end() || *i != *j)
             return false;
+        }
         return true;
       }
     case SOAP_TYPE__array:
@@ -938,5 +1011,7 @@ bool json_lne(const value& x, const value& y)
 #endif
 
 #ifdef JSON_NAMESPACE
+#ifdef __cplusplus
 } // namespace json
+#endif
 #endif

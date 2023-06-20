@@ -8,7 +8,7 @@
 gSOAP XML Web services tools
 Copyright (C) 2000-2011, Robert van Engelen, Genivia Inc., All Rights Reserved.
 This part of the software is released under one of the following licenses:
-GPL, the gSOAP public license, or Genivia's license for commercial use.
+GPL or the gSOAP public license.
 --------------------------------------------------------------------------------
 gSOAP public license.
 
@@ -82,8 +82,8 @@ higher-level logic remains application-specific. Especially the mode of
 operation, ad-hoc or managed with a Discovery Proxy, depends on the application
 deployment and WS-Discovery support requirements.
 
-The following assumptions are made. A Client is an endpoint that searches for
-Target Service(s). A Target Service (TS) is and endpoint that makes itself
+The following assumptions are made. A Client (C) is an endpoint that searches for
+Target Service(s). A Target Service (TS) is a service endpoint that makes itself
 available for discovery. A Discovery Proxy (DP) is an endpoint that facilitates
 discovery of Target Services by Clients. The interfaces defined in the wsdd
 library can be used to implement Client, Target Service, and Discovery Proxy
@@ -139,9 +139,6 @@ periodically polling the port as shown:
       soap_print_fault(soap, stderr);
       exit(0);
     }
-
-    soap_wsdd_listen(soap, -1000); // listen for messages for 1 ms
-
     soap_wsdd_listen(soap, -1000); // listen for messages for 1 ms
     ...
 @endcode
@@ -161,8 +158,8 @@ A Target Service may invoke the following WS-Discovery operations:
 
 - `soap_wsdd_Hello`
 - `soap_wsdd_Bye`
-- `soap_wsdd_ProbeMatches` (automatic via `soap_wsdd_listen`)
-- `soap_wsdd_ResolveMatches` (automatic via `soap_wsdd_listen`)
+- `soap_wsdd_ProbeMatches` (e.g. via `soap_wsdd_listen`)
+- `soap_wsdd_ResolveMatches` (e.g. via `soap_wsdd_listen`)
 
 A Discovery Proxy can perform all operations listed above, and should use
 "wsdd:DiscoveryProxy" as the Type with the Hello, Bye, and ProbeMatches.
@@ -299,19 +296,62 @@ In managed mode, the ProbeMatches and ResolveMatches are automatically sent via
 returned.
 
 In ad-hoc mode, ProbeMatches or ResolveMatches responses are NOT sent
-automatically. In ad-hoc mode the responses can be returned by adding code to
+automatically.  In ad-hoc mode the responses can be returned by adding code to
 the event handler or from anywhere in the main program, for example after @ref
-soap_wsdd_listen. When responses are to be returned from the event handler or
-from the main program, you should invoke @ref soap_wsdd_ProbeMatches and @ref
-soap_wsdd_ResolveMatches to explicitly send unicast messages with the match(es)
-back to the clients. The WS-Addressing ReplyTo address can be used as the
-return address (when not anonymous), or by using the peer's host information
-that is accessible in the soap->peer and soap->peerlen members. For example:
+soap_wsdd_listen.  When responses are to be returned from the event handler or
+from the main program, you should invoke @ref soap_wsdd_ProbeMatches and
+@ref soap_wsdd_ResolveMatches to explicitly send unicast messages with the
+match(es) back to the clients.  The WS-Addressing ReplyTo address can be used as
+the return address (when not anonymous), or by using the peer's host
+information that is accessible in the soap->peer and soap->peerlen members. For
+example:
 
 @code
     char host[1024], port[16];
     getnameinfo((struct sockaddr*)&soap->peer, soap->peerlen, host, sizeof(host), port, 16, NI_DGRAM | NI_NAMEREQD | NI_NUMERICSERV);
 @endcode
+
+The @ref soap_wsdd_ProbeMatches function takes an array of
+@ref wsdd__ProbeMatchesType matches to transmit.  This array is created by
+calling functions @ref soap_wsdd_init_ProbeMatches and then @ref
+soap_wsdd_add_ProbeMatch multiple times.  Each call adds an element to the
+matches:
+
+@code
+    const char *endpoint, *types, *scopes, *matchby, *xaddrs;
+    unsigned int version;
+    const char *relatesto, *to;
+    struct wsdd__ProbeMatchesType matches;
+    soap_wsdd_init_ProbeMatches(soap, &matches);
+    ...
+    // repeat this to add multiple matches:
+    if (soap_wsdd_add_ProbeMatch(soap, &matches, endpoint, types, scopes, matchby, xaddrs, version))
+      ... // out of memory
+    ...
+    // send the ProbeMatches message
+    if (soap_wsdd_ProbeMatches(soap, endpoint, soap_wsa_rand_uuid(soap), relatesto, to, &matches))
+      ... // an error occurred
+@endcode
+
+After calling @ref soap_wsdd_add_ProbeMatch it is possible to add additional
+WS-Addressing header values to this matches array element.  For example the
+WS-Addressing reference parameters channel instance:
+
+@code
+    if (soap_wsdd_add_ProbeMatch(soap, &matches, endpoint, types, scopes, matchby, xaddrs, version))
+      ... // out of memory
+    // now allocate and add the WS-Addresssing reference parameters
+    struct wsa5__EndpointReference *ref = &matches.ProbeMatch[matches.__sizeProbeMatch - 1].wsa5__EndpointReference;
+    ref->ReferenceParameters = (struct wsa5__ReferenceParametersType*)soap_malloc(soap, sizeof(struct wsa5__ReferenceParametersType));
+    if (ref == NULL)
+      ... // out of memory
+    soap_default_wsa5__ReferenceParametersType(soap, ref->ReferenceParameters);
+    ref->ReferenceParameters->chan__ChannelInstance = ...
+@endcode
+
+See also the [Data binding](../../databinding/html/index.html) documentation on
+allocating and initializing C/C++ data in managed memory, managed by the `soap`
+context.
 
 @section wsdd_5 Generating C++ Server Objects
 
@@ -359,8 +399,6 @@ separately on wsdd.h (or wsdd5.h or wsdd10.h for WS-Discovery 1.0) by:
 
     soapcpp2 -a -L -pwsdd -Iimport import/wsdd.h
     
-This generates wsddService.cpp and wsddClient.cpp, which should be compiled together with the rest of your project code. Then change wsddapi.h to use `#include "wsddH.h"`.
-
 Now with this approach you must chain the service operations at the server side
 as follows:
 
@@ -373,6 +411,12 @@ as follows:
 where the `service` object is an instance of the application services generated
 by soapcpp2 `-j`.
 
+Then compile the generated wsddClient.cpp file with the macro
+`-DSOAP_H_FILE=wsddH.h` to specify that `wsddH.h` should be used instead of
+`soapH.h.
+
+To combine WS-Security with WS-Discovery, please see the next section.
+
 @section wsdd_6 Miscellaneous
 
 You must generate client-side operations that the WSDD library expects to be
@@ -380,13 +424,31 @@ linked with, by executing:
 
     soapcpp2 -a -L -pwsdd -Iimport import/wsdd.h
 
-Then change wsddapi.h to use `#include "wsddH.h"` and compile and link the
-generated wsddClient.cpp code with your project.
+Then compile the generated wsddClient.cpp file with the macro
+`-DSOAP_H_FILE=wsddH.h` to specify that `wsddH.h` should be used instead of
+`soapH.h.
+
+If WS-Security is used with WS-Discovery, then create a file `imports.h` with
+the following two lines:
+
+@code
+    // file: imports.h
+    #import "wsdd.h" // or wsdd10.h, wsdd5.h
+    #import "wsse.h"
+@endcode
+
+Then execute:
+
+    soapcpp2 -a -L -pwsdd -Iimport imports.h
+
+This generates wsddC.cpp and wsddClient.cpp, which should be compiled together
+with plugin/wsddapi.c, plugin/wsseapi.c, plugin/mecevp.c, and plugin/smdevp.c.
+All files should be compiled with `-DSOAP_H_FILE=wsddH.h`, i.e. macro
+`SOAP_H_FILE` set to `wsddH.h`.  WS-Security requires OpenSSL and linkage with
+libssl and libcrypto.
 
 For server-side projects, also compile and link the generated wsddServer.cpp
-code.
-
-You will need to implement the @ref wsdd_2.
+code.  You will also need to implement the @ref wsdd_2.
 
 Because WS-Addressing may relay faults to a FaultTo service, when implementing
 a service you will also have to define a SOAP Fault service operation to accept
@@ -414,6 +476,10 @@ services, the above suffices to generate the required code.
 */
 
 #include "wsddapi.h"
+
+#ifdef WIN32
+# pragma warning(disable : 4996) /* disable visual studio POSIX deprecation warnings */
+#endif
 
 #ifdef SOAP_WSDD_2005
 /* WS-Discovery 1.0 2005 */
@@ -819,7 +885,7 @@ soap_wsdd_init_ProbeMatches(struct soap *soap, struct wsdd__ProbeMatchesType *ma
 @param[in] MetadataVersion incremented by a positive value (>= 1) whenever there is a change in the metadata of the Target Service
 @return SOAP_OK or error code
 
-To populate a Prove matches container, first initialize with @ref
+To populate a Probe matches container, first initialize with @ref
 soap_wsdd_init_ProbeMatches, then use this function to add each match. The
 container is deallocated with soap_end(soap) and can be initialized again
 (without leaks).
@@ -1346,7 +1412,7 @@ __wsdd__Bye(struct soap *soap, struct wsdd__ByeType *Bye)
 /******************************************************************************/
 
 static int
-soap_wsdd_http(struct soap *soap, const char *endpoint, const char *host, int port, const char *path, const char *action, size_t count)
+soap_wsdd_http(struct soap *soap, const char *endpoint, const char *host, int port, const char *path, const char *action, ULONG64 count)
 {
   (void)endpoint; (void)host; (void)port; (void)path; (void)action;
   return soap->fresponse(soap, SOAP_OK, count);
@@ -1403,7 +1469,7 @@ __wsdd__Probe(struct soap *soap, struct wsdd__ProbeType *Probe)
   else
   {
     int err;
-    int (*fpost)(struct soap*, const char*, const char*, int, const char*, const char*, size_t);
+    int (*fpost)(struct soap*, const char*, const char*, int, const char*, const char*, ULONG64);
     const char *MessageID = soap_wsa_rand_uuid(soap);
     const char *Action = SOAP_NAMESPACE_OF_wsdd"/ProbeMatches";
 
@@ -1534,7 +1600,7 @@ __wsdd__Resolve(struct soap *soap, struct wsdd__ResolveType *Resolve)
   else
   {
     int err;
-    int (*fpost)(struct soap*, const char*, const char*, int, const char*, const char*, size_t);
+    int (*fpost)(struct soap*, const char*, const char*, int, const char*, const char*, ULONG64);
     const char *MessageID = soap_wsa_rand_uuid(soap);
     const char *Action = SOAP_NAMESPACE_OF_wsdd"/ResolveMatches";
 

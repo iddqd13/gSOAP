@@ -19,20 +19,20 @@ then
 
   # Create a certificate and signing request
 
-  openssl req -newkey rsa:1024 -sha1 -keyout ${1}key.pem -out ${1}req.pem
+  openssl req -newkey rsa:2048 -sha256 -keyout ${1}key.pem -out ${1}req.pem
 
   # Sign the certificate with the root CA
 
-  openssl x509 -req -in ${1}req.pem -sha1 -extfile openssl.cnf -extensions usr_cert -CA root.pem -CAkey root.pem -CAcreateserial -out ${1}cert.pem -days 1095
+  openssl x509 -req -in ${1}req.pem -sha256 -extfile openssl.cnf -extensions usr_cert -CA root.pem -CAkey root.pem -CAcreateserial -out ${1}cert.pem -days 1095
+
+  # Bundle certificates with the private key file
+
+  cat ${1}key.pem ${1}cert.pem > ${1}.pem
 
   # Bundle the CA certificate cacert with the certificate file
 
   cat ${1}cert.pem cacert.pem > ${1}tmp.pem
   mv -f ${1}tmp.pem ${1}cert.pem
-
-  # Bundle certificates with the private key file
-
-  cat ${1}key.pem ${1}cert.pem > ${1}.pem
 
   # Show what we got
 

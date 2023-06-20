@@ -7,7 +7,7 @@
 gSOAP XML Web services tools
 Copyright (C) 2000-2015, Robert van Engelen, Genivia, Inc. All Rights Reserved.
 This software is released under one of the following two licenses:
-GPL or Genivia's license for commercial use.
+GPL.
 --------------------------------------------------------------------------------
 GPL license.
 
@@ -48,6 +48,7 @@ A commercial use license is available from Genivia, Inc., contact@genivia.com
 # define SOAP_TYPE__array               SOAP_TYPE_json__array
 # define SOAP_TYPE__struct              SOAP_TYPE_json__struct
 # define SOAP_TYPE__base64              SOAP_TYPE_json__base64
+# define SOAP_TYPE__rawdata             SOAP_TYPE_json__rawdata
 #endif
 
 #ifdef JSON_NAMESPACE
@@ -77,7 +78,7 @@ namespace json {
 #endif
 
 /// bidirectional const iterator over values (struct or array or one atomic value)
-class value_const_iterator : public std::iterator<std::bidirectional_iterator_tag,struct value>
+class value_const_iterator
 {
   friend class value_iterator;
  private:
@@ -85,6 +86,11 @@ class value_const_iterator : public std::iterator<std::bidirectional_iterator_ta
   struct member*                _member;
   int                           _index;
  public:
+  typedef ptrdiff_t difference_type;
+  typedef struct value value_type;
+  typedef struct value& reference;
+  typedef struct value* pointer;
+  typedef std::bidirectional_iterator_tag iterator_category;
                                 value_const_iterator() : _value(NULL), _member(NULL), _index(0) { }
                                 value_const_iterator(struct value* v) : _value(v),  _member(NULL), _index(0) { }
                                 value_const_iterator(struct value* v, struct member* m) : _value(v), _member(m), _index(0) { }
@@ -127,7 +133,7 @@ class value_const_iterator : public std::iterator<std::bidirectional_iterator_ta
   int index() const
   {
     if (_value->__type == SOAP_TYPE__struct)
-      return _member - ((_struct*)_value->ref)->member;
+      return (int)(_member - ((_struct*)_value->ref)->member);
     if (_value->__type == SOAP_TYPE__array)
       return _index;
     return 0;
@@ -203,7 +209,7 @@ class value_const_iterator : public std::iterator<std::bidirectional_iterator_ta
 };
 
 /// bidirectional iterator over values (struct or array or one atomic value)
-class value_iterator : public std::iterator<std::bidirectional_iterator_tag,struct value>
+class value_iterator
 {
   friend class value_const_iterator;
  private:
@@ -211,6 +217,10 @@ class value_iterator : public std::iterator<std::bidirectional_iterator_tag,stru
   struct member*                _member;
   int                           _index;
  public:
+  typedef ptrdiff_t difference_type;
+  typedef struct value value_type;
+  typedef struct value& reference;
+  typedef struct value* pointer;
                                 value_iterator() : _value(NULL), _member(NULL), _index(0) { }
                                 value_iterator(struct value* v) : _value(v),  _member(NULL), _index(0) { }
                                 value_iterator(struct value* v, struct member* m) : _value(v), _member(m), _index(0) { }
@@ -278,7 +288,7 @@ class value_iterator : public std::iterator<std::bidirectional_iterator_tag,stru
   int index() const
   {
     if (_value->__type == SOAP_TYPE__struct)
-      return _member - ((_struct*)_value->ref)->member;
+      return (int)(_member - ((_struct*)_value->ref)->member);
     if (_value->__type == SOAP_TYPE__array)
       return _index;
     return 0;
@@ -412,9 +422,9 @@ class _array_const_iterator
   bool                          operator==(const _array_const_iterator& that) const { return _value == that._value; }
   bool                          operator!=(const _array_iterator& that)       const { return !operator==(that); }
   bool                          operator!=(const _array_const_iterator& that) const { return !operator==(that); }
-  int                           index() const      { return _value - _start; } ///< get array index
-  const struct value&           operator*() const  { return *_value; }         ///< get array value
-  const struct value*           operator->() const { return _value; }          ///< get array value
+  int                           index() const      { return (int)(_value - _start); } ///< get array index
+  const struct value&           operator*() const  { return *_value; }                ///< get array value
+  const struct value*           operator->() const { return _value; }                 ///< get array value
   _array_const_iterator&        operator++()       { _value++; return *this; }
   _array_const_iterator         operator++(int)    { _array_const_iterator i = *this; _value++; return i; }
   _array_const_iterator&        operator+=(int k)  { _value += k; return *this; }
@@ -435,9 +445,9 @@ class _array_iterator
   bool                          operator==(const _array_const_iterator& that) const { return _value == that._value; }
   bool                          operator!=(const _array_iterator& that)       const { return !operator==(that); }
   bool                          operator!=(const _array_const_iterator& that) const { return !operator==(that); }
-  int                           index() const      { return _value - _start; } ///< get array index
-  struct value&                 operator*() const  { return *_value; }         ///< get array value
-  struct value*                 operator->() const { return _value; }          ///< get array value
+  int                           index() const      { return (int)(_value - _start); } ///< get array index
+  struct value&                 operator*() const  { return *_value; }                ///< get array value
+  struct value*                 operator->() const { return _value; }                 ///< get array value
   _array_iterator&              operator++()       { _value++; return *this; }
   _array_iterator               operator++(int)    { _array_iterator i = *this; _value++; return i; }
   _array_iterator&              operator+=(int k)  { _value += k; return *this; }
@@ -458,9 +468,9 @@ class params_const_iterator
   bool                          operator==(const params_const_iterator& that) const { return _param == that._param; }
   bool                          operator!=(const params_iterator& that)       const { return !operator==(that); }
   bool                          operator!=(const params_const_iterator& that) const { return !operator==(that); }
-  int                           index() const      { return _param - _start; } ///< get parameter index
-  const struct value&           operator*() const  { return _param->value; }   ///< get parameter value
-  const struct value*           operator->() const { return &_param->value; }  ///< get parameter value
+  int                           index() const      { return (int)(_param - _start); } ///< get parameter index
+  const struct value&           operator*() const  { return _param->value; }          ///< get parameter value
+  const struct value*           operator->() const { return &_param->value; }         ///< get parameter value
   params_const_iterator&        operator++()       { _param++; return *this; }
   params_const_iterator         operator++(int)    { params_const_iterator i = *this; _param++; return i; }
   params_const_iterator&        operator+=(int k)  { _param += k; return *this; }
@@ -481,9 +491,9 @@ class params_iterator
   bool                          operator==(const params_const_iterator& that) const { return _param == that._param; }
   bool                          operator!=(const params_iterator& that)       const { return !operator==(that); }
   bool                          operator!=(const params_const_iterator& that) const { return !operator==(that); }
-  int                           index() const      { return _param - _start; } ///< get parameter index
-  struct value&                 operator*() const  { return _param->value; }   ///< get parameter value
-  struct value*                 operator->() const { return &_param->value; }  ///< get parameter value
+  int                           index() const      { return (int)(_param - _start); } ///< get parameter index
+  struct value&                 operator*() const  { return _param->value; }          ///< get parameter value
+  struct value*                 operator->() const { return &_param->value; }         ///< get parameter value
   params_iterator&              operator++()       { _param++; return *this; }
   params_iterator               operator++(int)    { params_iterator i = *this; _param++; return i; }
   params_iterator&              operator+=(int k)  { _param += k; return *this; }

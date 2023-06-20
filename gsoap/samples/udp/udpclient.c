@@ -7,7 +7,7 @@
 gSOAP XML Web services tools
 Copyright (C) 2001-2008, Robert van Engelen, Genivia, Inc. All Rights Reserved.
 This software is released under one of the following two licenses:
-GPL or Genivia's license for commercial use.
+GPL.
 --------------------------------------------------------------------------------
 GPL license.
 
@@ -34,7 +34,7 @@ A commercial use license is available from Genivia, Inc., contact@genivia.com
 #include "soapH.h"
 #include "udp.nsmap"
 
-#define SERVER "soap.udp://localhost:10000" // use NULL for address set in WSDL
+#define SERVER "soap.udp://localhost:10000"
 
 int main(int argc, char **argv)
 { struct soap soap;

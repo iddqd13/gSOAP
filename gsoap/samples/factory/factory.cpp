@@ -18,7 +18,7 @@
 gSOAP XML Web services tools
 Copyright (C) 2001-2008, Robert van Engelen, Genivia, Inc. All Rights Reserved.
 This software is released under one of the following two licenses:
-GPL or Genivia's license for commercial use.
+GPL.
 --------------------------------------------------------------------------------
 GPL license.
 
@@ -113,10 +113,7 @@ unsigned int Factory::create(struct soap *soap, enum t__object object, char *nam
       { ref[handle % POOLSIZE] = r;		// add object to the pool
         r->object = object;			// save type
 	if (name)				// save name (if assigned)
-	{ size_t l = strlen(name);
-	  r->name = (char*)malloc(l + 1);
-	  soap_strcpy(r->name, l + 1, name);
-	}
+	  r->name = strdup(name);
 	else
 	  r->name = NULL;
         r->handle = handle;			// keep handle for verification

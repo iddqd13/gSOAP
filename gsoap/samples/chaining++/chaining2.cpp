@@ -19,7 +19,7 @@
 gSOAP XML Web services tools
 Copyright (C) 2001-2011, Robert van Engelen, Genivia, Inc. All Rights Reserved.
 This software is released under one of the following two licenses:
-GPL or Genivia's license for commercial use.
+GPL.
 --------------------------------------------------------------------------------
 GPL license.
 
@@ -94,7 +94,9 @@ int Calc::calcService::mul(double a, double b, double *r)
 }
 
 int Calc::calcService::div(double a, double b, double *r)
-{ *r = a / b;
+{ if (b == 0)
+    return soap_sender_fault(soap, "Division by zero", NULL);
+  *r = a / b;
   return SOAP_OK;
 }
 

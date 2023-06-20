@@ -71,12 +71,6 @@
 /* Define to 1 if you have the <math.h> header file. */
 #define HAVE_MATH_H 1
 
-/* Define to 1 if you have the `mbtowc' function. */
-#define HAVE_MBTOWC 1
-
-/* Define to 1 if you have the <memory.h> header file. */
-#define HAVE_MEMORY_H 1
-
 /* Define to 1 if you have the `memset' function. */
 #define HAVE_MEMSET 1
 
@@ -90,7 +84,7 @@
 #define HAVE_NEWLOCALE 1
 
 /* Define to 1 if you have the <openssl/ssl.h> header file. */
-#define HAVE_OPENSSL_SSL_H 1
+/* #undef HAVE_OPENSSL_SSL_H */
 
 /* Define to 1 if you have the `poll' function. */
 #define HAVE_POLL 1
@@ -110,6 +104,9 @@
 /* Define to 1 if you have the `socket' function. */
 #define HAVE_SOCKET 1
 
+/* Define to 1 if the system has the type `socklen_t'. */
+#define HAVE_SOCKLEN_T 1
+
 /* Define to 1 if you have the `sprintf_l' function. */
 #define HAVE_SPRINTF_L 1
 
@@ -121,6 +118,9 @@
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #define HAVE_STDINT_H 1
+
+/* Define to 1 if you have the <stdio.h> header file. */
+#define HAVE_STDIO_H 1
 
 /* Define to 1 if you have the <stdlib.h> header file. */
 #define HAVE_STDLIB_H 1
@@ -142,6 +142,9 @@
 
 /* Define to 1 if you have the <string.h> header file. */
 #define HAVE_STRING_H 1
+
+/* Define to 1 if you have the `strlcat' function. */
+#define HAVE_STRLCAT 1
 
 /* Define to 1 if you have the `strlcpy' function. */
 #define HAVE_STRLCPY 1
@@ -218,8 +221,8 @@
 /* Define to 1 if you have the `uselocale' function. */
 #define HAVE_USELOCALE 1
 
-/* Define to 1 if you have the `wctomb' function. */
-#define HAVE_WCTOMB 1
+/* Define to 1 if you have the <wolfssl/ssl.h> header file. */
+#define HAVE_WOLFSSL_SSL_H 1
 
 /* Define to 1 if you have the <xlocale.h> header file. */
 #define HAVE_XLOCALE_H 1
@@ -248,14 +251,10 @@
 /* Define to the version of this package. */
 #define PACKAGE_VERSION "2.8"
 
-/* Define as the return type of signal handlers (`int' or `void'). */
-#define RETSIGTYPE void
-
-/* Define to 1 if you have the ANSI C header files. */
+/* Define to 1 if all of the C90 standard headers exist (not just the ones
+   required in a freestanding environment). This macro is provided for
+   backward compatibility; new code need not use it. */
 #define STDC_HEADERS 1
-
-/* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
-#define TIME_WITH_SYS_TIME 1
 
 /* Define to 1 if your <sys/time.h> declares `struct tm'. */
 /* #undef TM_IN_SYS_TIME */

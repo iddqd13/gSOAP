@@ -8,7 +8,7 @@
 gSOAP XML Web services tools
 Copyright (C) 2000-2015, Robert van Engelen, Genivia Inc., All Rights Reserved.
 This part of the software is released under one of the following licenses:
-GPL, the gSOAP public license, or Genivia's license for commercial use.
+GPL or the gSOAP public license.
 --------------------------------------------------------------------------------
 gSOAP public license.
 
@@ -2748,7 +2748,7 @@ soap_wsrm_chk(struct soap *soap, int timeout, int flag)
     char *s;
     size_t l = strlen(replyTo);
     s = (char*)malloc(l + 1);
-    if (s)
+    if (!s)
     {
       MUTEX_UNLOCK(soap_wsrm_session_lock);
       return soap->error = SOAP_EOM;
@@ -3659,9 +3659,9 @@ soap_wsrm_check_fault(struct soap *soap, enum wsrm__FaultCodes *fault, const cha
 {
   if (soap->error && soap->fault && soap->fault->SOAP_ENV__Code)
   {
-    const char *code = soap_check_faultsubcode(soap);
+    const char *code = soap_fault_subcode(soap);
     if (info)
-      *info = soap_check_faultdetail(soap);
+      *info = soap_fault_detail(soap);
     if (code)
       return soap_s2wsrm__FaultCodes(soap, code, fault);
   }
@@ -3690,11 +3690,7 @@ soap_wsrm_error(struct soap *soap, struct soap_wsrm_sequence *seq, enum wsrm__Fa
   DBGFUN1("soap_wsrm_error", "code=%s", code ? code : "(null)");
   data = (struct soap_wsrm_data*)soap_lookup_plugin(soap, soap_wsrm_id);
   if (data)
-  {
     data->state = SOAP_WSRM_OFF; /* disable caching */
-    soap_wsrm_seq_release(soap, data->seq);
-    data->seq = NULL;
-  }
   if (seq)
   {
     seq->fault = fault;
@@ -3930,13 +3926,12 @@ soap_wsrm(struct soap *soap, struct soap_plugin *p, void *arg)
   /* register the destructor */
   p->fdelete = soap_wsrm_delete;
   /* if OK then initialize */
-  if (p->data)
+  if (!p->data)
+    return SOAP_EOM;
+  if (soap_wsrm_init(soap, (struct soap_wsrm_data*)p->data, arg))
   {
-    if (soap_wsrm_init(soap, (struct soap_wsrm_data*)p->data, arg))
-    {
-      SOAP_FREE(soap, p->data); /* error: could not init */
-      return SOAP_EOM; /* return error */
-    }
+    SOAP_FREE(soap, p->data); /* error: could not init */
+    return SOAP_EOM; /* return error */
   }
   return SOAP_OK;
 }
@@ -3993,7 +3988,9 @@ soap_wsrm_copy(struct soap *soap, struct soap_plugin *p, struct soap_plugin *q)
   (void)soap;
   /* create local plugin data */
   p->data = (void*)SOAP_MALLOC(soap, sizeof(struct soap_wsrm_data));
-  soap_memcpy((void*)p->data, sizeof(struct soap_wsrm_data), (const void*)q->data, sizeof(struct soap_wsrm_data));
+  if (!p->data)
+    return SOAP_EOM;
+  (void)soap_memcpy((void*)p->data, sizeof(struct soap_wsrm_data), (const void*)q->data, sizeof(struct soap_wsrm_data));
   ((struct soap_wsrm_data*)p->data)->state = SOAP_WSRM_OFF;
   ((struct soap_wsrm_data*)p->data)->seq = NULL;
   ((struct soap_wsrm_data*)p->data)->msg = NULL;
@@ -4013,8 +4010,7 @@ static void
 soap_wsrm_delete(struct soap *soap, struct soap_plugin *p)
 {
   (void)soap;
-  if (p->data)
-    SOAP_FREE(soap, p->data);
+  SOAP_FREE(soap, p->data);
 }
 
 /******************************************************************************\
@@ -5040,7 +5036,7 @@ soap_wsrm_msg_append(struct soap *soap, struct soap_wsrm_data *data, const char 
     return soap->error = SOAP_EOM;
   }
   p->len = len;
-  soap_memcpy((void*)p->buf, len, (const void*)buf, len);
+  (void)soap_memcpy((void*)p->buf, len, (const void*)buf, len);
   p->next = NULL;
   if (!data->msg->list)
     data->msg->list = p;
@@ -5398,7 +5394,7 @@ soap_wsrm_msg_new(struct soap *soap, struct soap_wsrm_sequence *seq, ULONG64 num
       }
       if (seq->messages)
       {
-        soap_memcpy((void*)p, n * sizeof(struct soap_wsrm_message*), (const void*)seq->messages, seq->num * sizeof(struct soap_wsrm_message*));
+        (void)soap_memcpy((void*)p, n * sizeof(struct soap_wsrm_message*), (const void*)seq->messages, seq->num * sizeof(struct soap_wsrm_message*));
         free((void*)seq->messages);
       }
       seq->messages = p;

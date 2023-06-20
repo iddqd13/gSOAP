@@ -23,7 +23,7 @@
      <td>
       <div style="float: right; font-size: 18px; font-weight: bold;">Class Members - Functions</div>
       <br>
-      <div style="float: right; font-size: 10px;">updated Wed Mar 1 2017 by Robert van Engelen</div>
+      <div style="float: right; font-size: 10px;">updated Thu Feb 9 2023 by Robert van Engelen</div>
      </td>
      <td width="10%">&nbsp;</td>
     </tr>
@@ -56,6 +56,7 @@
     <ul class="tablist">
       <li><a href="#index__"><span>_</span></a></li>
       <li><a href="#index_b"><span>b</span></a></li>
+      <li><a href="#index_c"><span>c</span></a></li>
       <li><a href="#index_e"><span>e</span></a></li>
       <li><a href="#index_f"><span>f</span></a></li>
       <li><a href="#index_g"><span>g</span></a></li>
@@ -81,8 +82,11 @@
 <li>_base64()
 : <a class="el" href="struct__base64.html#a8a14756c5cd4ea4fced24df501102ac7">_base64</a>
 </li>
+<li>_rawdata()
+: <a class="el" href="struct__rawdata.html#a684b4925f2b06e20c132e1e87bd3b883">_rawdata</a>
+</li>
 <li>_struct()
-: <a class="el" href="struct__struct.html#a27b8a24d67da6c9dadf973c9d7419483">_struct</a>
+: <a class="el" href="struct__struct.html#a89aff20b2d589201ebe2590ca56e105a">_struct</a>
 </li>
 </ul>
 
@@ -93,6 +97,13 @@
 , <a class="el" href="struct__struct.html#affe3d3358649a2e72dcdd44bd0060ce8">_struct</a>
 , <a class="el" href="structparams.html#a338caa1a01c45b5578929775722b08d4">params</a>
 , <a class="el" href="structvalue.html#a0f72d8e5406f3349b26de14831b4172f">value</a>
+</li>
+</ul>
+
+
+<h3><a class="anchor" id="index_c"></a>- c -</h3><ul>
+<li>clear()
+: <a class="el" href="structvalue.html#ab7e9e0cfaad94399915c21cd2777038e">value</a>
 </li>
 </ul>
 
@@ -162,6 +173,12 @@
 <li>is_null()
 : <a class="el" href="structvalue.html#a98b46005862c3378fa0f514876ac6967">value</a>
 </li>
+<li>is_number()
+: <a class="el" href="structvalue.html#a2c9cfcdadaebaa3a4834ef507a5452c2">value</a>
+</li>
+<li>is_rawdata()
+: <a class="el" href="structvalue.html#a621d4c4e391b9d018dc3c2698f091655">value</a>
+</li>
 <li>is_string()
 : <a class="el" href="structvalue.html#a9b7b0789dc59f7a50c009c487777c282">value</a>
 </li>
@@ -189,7 +206,7 @@
 : <a class="el" href="structmethod_call.html#a8c94e753b66739ef177654f909364ad6">methodCall</a>
 </li>
 <li>nth()
-: <a class="el" href="structvalue.html#ae88d4b548e28edb9fc354be581d71093">value</a>
+: <a class="el" href="structvalue.html#ae36554f425b6f2b0c750d1243db37e2c">value</a>
 </li>
 </ul>
 
@@ -213,6 +230,9 @@
 <li>operator const struct _base64 &amp;()
 : <a class="el" href="structvalue.html#af81afd529cb540fcc19630ecd8dff81b">value</a>
 </li>
+<li>operator const struct _rawdata &amp;()
+: <a class="el" href="structvalue.html#addb0643adf90b5ebfc08a3091c69ea93">value</a>
+</li>
 <li>operator const struct _struct &amp;()
 : <a class="el" href="structvalue.html#a0d650615b7a03e5c430d8a171f5bf2d9">value</a>
 </li>
@@ -231,6 +251,9 @@
 <li>operator struct _base64 &amp;()
 : <a class="el" href="structvalue.html#a5c5cb166dbb3af8354c0244b153fa756">value</a>
 </li>
+<li>operator struct _rawdata &amp;()
+: <a class="el" href="structvalue.html#a348987a5cbc55b964bc5b7d4a8d301a0">value</a>
+</li>
 <li>operator struct _struct &amp;()
 : <a class="el" href="structvalue.html#a87ee23db9bb536506c12f16bef72f3ab">value</a>
 </li>
@@ -244,15 +267,17 @@
 : <a class="el" href="structmethod_call.html#a91eb1168ac1e48e76b438d373a5c2e80">methodCall</a>
 </li>
 <li>operator=()
-: <a class="el" href="structvalue.html#ac9b866e9ac12e92653a93fdf5e3e8d38">value</a>
+: <a class="el" href="struct__array.html#a64f61e563d1a71448d4d944f8c45918f">_array</a>
+, <a class="el" href="struct__struct.html#aaaed7598c20b1cb59bd497b5517af593">_struct</a>
+, <a class="el" href="structvalue.html#adf97cb4c928389d3f849cd3eac6be9eb">value</a>
 </li>
 <li>operator[]()
 : <a class="el" href="struct__array.html#af42e9052bcc131bff0bb6437843b3fb0">_array</a>
-, <a class="el" href="struct__struct.html#ad81b38b75b45340b05b2963cc108de8a">_struct</a>
-, <a class="el" href="structmethod_call.html#a3a40c0257b4b21183b4d442fde476b3b">methodCall</a>
+, <a class="el" href="struct__struct.html#a464b478a002de01a4be4d5fbf015b7dc">_struct</a>
+, <a class="el" href="structmethod_call.html#a0936960d7004a8431ab7b9eae028689b">methodCall</a>
 , <a class="el" href="structmethod_response.html#a8e58fe14069e86da0a1edd89d30d2816">methodResponse</a>
 , <a class="el" href="structparams.html#a439ba1cfe8bb3419ad7cb983c10b50a3">params</a>
-, <a class="el" href="structvalue.html#af30e80af97e9c85764914b4cb92f88cf">value</a>
+, <a class="el" href="structvalue.html#aecdf8a4969745c9a1196d87dfdeca36a">value</a>
 </li>
 </ul>
 
@@ -262,7 +287,8 @@
 : <a class="el" href="structparams.html#a20bbc13222589486dd7799ae4a20b260">params</a>
 </li>
 <li>ptr()
-: <a class="el" href="struct__base64.html#accb75dbcdaf316a692d92d42783ffcb8">_base64</a>
+: <a class="el" href="struct__base64.html#aea23a042a3ab53e66d2bcd8475a6b009">_base64</a>
+, <a class="el" href="struct__rawdata.html#a9ee0f6fde90e20379c4414f6f95ba819">_rawdata</a>
 </li>
 </ul>
 
@@ -284,11 +310,12 @@
 , <a class="el" href="structmethod_response.html#a8fd13a1d33e5d50ff852e9a97b87fd0d">methodResponse</a>
 </li>
 <li>set_fault()
-: <a class="el" href="structmethod_response.html#a1dc601f5a78621a590d39142bff730b2">methodResponse</a>
+: <a class="el" href="structmethod_response.html#acbaf0127f6e08d4ea02cbcfbb5f3e463">methodResponse</a>
 </li>
 <li>size()
 : <a class="el" href="struct__array.html#a69afe895df347a4cba1c53841b3e7519">_array</a>
-, <a class="el" href="struct__base64.html#a68f0dc85f1bebf170b6322a43408b8ef">_base64</a>
+, <a class="el" href="struct__base64.html#a89555bd2f9d977fd17bc2823bef10230">_base64</a>
+, <a class="el" href="struct__rawdata.html#a5e1dace69a66dfbc369809bc3f1559e7">_rawdata</a>
 , <a class="el" href="struct__struct.html#a78bb51fec1216a80d3749aa3ef5db221">_struct</a>
 , <a class="el" href="structparams.html#a6e150e3958d176f05bd6579d5d14836c">params</a>
 , <a class="el" href="structvalue.html#aa348b92d0343ec28a56542f2c47dc3aa">value</a>
@@ -304,10 +331,10 @@
 </div><!-- contents -->
 <hr class="footer">
 <address class="footer">
-Copyright (C) 2017, Robert van Engelen, Genivia Inc., All Rights Reserved.
+Copyright (C) 2023, Robert van Engelen, Genivia Inc., All Rights Reserved.
 </address>
 <address class="footer"><small>
-Converted on Wed Mar 1 2017 13:52:09 by <a target="_blank" href="http://www.doxygen.org/index.html">Doxygen</a> 1.8.11</small></address>
+Converted on Thu Feb 9 2023 14:38:01 by <a target="_blank" href="http://www.doxygen.org/index.html">Doxygen</a> 1.8.11</small></address>
 <br>
 <div style="height: 246px; background: #DBDBDB;">
 </body>

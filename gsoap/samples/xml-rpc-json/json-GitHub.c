@@ -1,7 +1,7 @@
 /*
 	json-GitHub.c
 
-	JSON GitHub API v3 (C version)
+	JSON GitHub API v3 (gSOAP C version)
 	https://developer.github.com/v3/
 
 	Compile:
@@ -9,7 +9,7 @@
 	cc -DWITH_OPENSSL -DWITH_GZIP -o json-GitHub json-GitHub.c xml-rpc.c json.c stdsoap2.c soapC.c -lcrypto -lssl -lz
 
 	Usage:
-	./json-GutHub hostname [username password]
+	./json-GutHub URL [username password]
 
 	Example:
 	./json-GitHub https://api.github.com/orgs/Genivia/repos
@@ -18,7 +18,7 @@
 gSOAP XML Web services tools
 Copyright (C) 2000-2015, Robert van Engelen, Genivia, Inc. All Rights Reserved.
 This software is released under one of the following two licenses:
-GPL or Genivia's license for commercial use.
+GPL.
 --------------------------------------------------------------------------------
 GPL license.
 
@@ -48,7 +48,7 @@ int main(int argc, char **argv)
 {
   if (argc < 2)
   {
-    fprintf(stderr, "Usage: json-GitHub hostname [username password]\nFor example: json-GitHub https://api.github.com/orgs/Genivia/repos\n\n");
+    fprintf(stderr, "Usage: json-GitHub URL [username password]\nFor example: json-GitHub https://api.github.com/orgs/Genivia/repos\n\n");
     exit(1);
   }
   else

@@ -36,7 +36,7 @@
 gSOAP XML Web services tools
 Copyright (C) 2001-2008, Robert van Engelen, Genivia, Inc. All Rights Reserved.
 This software is released under one of the following two licenses:
-GPL or Genivia's license for commercial use.
+GPL.
 --------------------------------------------------------------------------------
 GPL license.
 
@@ -182,6 +182,9 @@ int run_server(int port)
   { fprintf(stderr, "Bind to port %d successful\n", port);
     /* Optional: let server time out after one hour */
     soap.accept_timeout = 3600;
+    /* IO timeouts (sec) */
+    soap.send_timeout = 10;
+    soap.recv_timeout = 10;
     /* Unix/Linux SIGPIPE, this is OS dependent:
     soap.accept_flags = SO_NOSIGPIPE;	// some systems like this
     soap.socket_flags = MSG_NOSIGNAL;	// others need this
@@ -246,6 +249,9 @@ int run_server(int port)
   { fprintf(stderr, "Bind to port %d successful\n", port);
     /* Optional: let server time out after one hour */
     soap.accept_timeout = 3600;
+    /* IO timeouts (sec) */
+    soap.send_timeout = 10;
+    soap.recv_timeout = 10;
     /* Unix/Linux SIGPIPE, this is OS dependent:
     soap.accept_flags = SO_NOSIGPIPE;	// some systems like this
     soap.socket_flags = MSG_NOSIGNAL;	// others need this
@@ -316,8 +322,8 @@ int run_client(int argc, char **argv)
   /* Connect timeout value (sec) (not supported by Linux) */
   soap.connect_timeout = 10;
   /* IO timeouts (sec) */
-  soap.send_timeout = 30;
-  soap.recv_timeout = 30;
+  soap.send_timeout = 10;
+  soap.recv_timeout = 10;
   /* Unix/Linux SIGPIPE, this is OS dependent:
   soap.accept_flags = SO_NOSIGPIPE;	// some systems like this
   soap.socket_flags = MSG_NOSIGNAL;	// others need this

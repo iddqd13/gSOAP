@@ -7,7 +7,7 @@
 gSOAP XML Web services tools
 Copyright (C) 2001-2008, Robert van Engelen, Genivia Inc. All Rights Reserved.
 This software is released under one of the following licenses:
-GPL or Genivia's license for commercial use.
+GPL.
 --------------------------------------------------------------------------------
 GPL license.
 
@@ -44,9 +44,10 @@ typedef char	*xsd__anyURI,
 		*xsd__string;
 typedef bool	xsd__boolean;
 
-extern class ostream;
-extern class istream;
+extern class std::ostream;
+extern class std::istream;
 
 #include "includes.h"
 
+extern class MapOfStringToString;
 extern class SetOfString;

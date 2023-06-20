@@ -45,7 +45,7 @@
 gSOAP XML Web services tools
 Copyright (C) 2001-2008, Robert van Engelen, Genivia, Inc. All Rights Reserved.
 This software is released under one of the following two licenses:
-GPL or Genivia's license for commercial use.
+GPL.
 --------------------------------------------------------------------------------
 GPL license.
 
@@ -199,13 +199,15 @@ int main(int argc, char **argv)
       // copy soap environment and spawn thread (if Pthreads is installed)
       tsoap = soap_copy(&soap);
 #ifdef _POSIX_THREADS
-      pthread_create(&tid, NULL, (void*(*)(void*))process_request, (void*)tsoap);
+      while (pthread_create(&tid, NULL, (void*(*)(void*))process_request, (void*)tsoap))
+	sleep(1);
 #else
       process_request((void*)tsoap);
 #endif
     }
   }
-  // detach
+  soap_destroy(&soap);
+  soap_end(&soap);
   soap_done(&soap);
   return 0;
 }
@@ -359,6 +361,7 @@ static void saveData(ns__Data& data, const char *name)
     len -= nwritten;
     buf += nwritten;
   }
+  fclose(fd);
 }
 
 static void sigpipe_handle(int x) { }
